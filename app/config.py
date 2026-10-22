@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     llm_retry_base_delay: float = 0.5
     llm_retry_max_delay: float = 8.0
 
+    # Model calls per question. Each tool round trip uses one.
+    agent_max_steps: int = 6
+
 
 @lru_cache
 def get_settings() -> Settings:

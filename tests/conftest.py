@@ -6,6 +6,7 @@ dependency injection for tests, similar to constructor injection in NUnit/xUnit.
 """
 
 import os
+from pathlib import Path
 
 # Point the app at the test database BEFORE importing it: app.db creates its
 # engine at import time from DATABASE_URL. CI sets TEST_DATABASE_URL; locally
@@ -89,3 +90,16 @@ def make_document(db: Session) -> Callable[..., Document]:
         return doc
 
     return _make
+
+
+DATA_DIR = Path(__file__).parent / "data"
+
+
+@pytest.fixture
+def load_sample() -> Callable[[str], str]:
+    """Read a sample document from tests/data, e.g. load_sample("services_agreement")."""
+
+    def _load(name: str) -> str:
+        return (DATA_DIR / f"{name}.txt").read_text(encoding="utf-8")
+
+    return _load

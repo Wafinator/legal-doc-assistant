@@ -1,0 +1,38 @@
+MASTER SERVICES AGREEMENT
+
+This Master Services Agreement (the "Agreement") is entered into as of March 1, 2026,
+between Northwind Analytics LLC ("Provider") and Harbor Freight Logistics Inc. ("Client").
+
+1. DEFINITIONS
+"Services" means the data analytics services described in each Statement of Work.
+"Confidential Information" means any non-public information disclosed by either party.
+
+2. TERM
+This Agreement begins on the Effective Date and continues for two (2) years, unless
+terminated earlier under Section 8.
+
+3. Fees and Payment
+3.1 Fees
+Client shall pay the fees set out in each Statement of Work.
+3.2 Late Payment
+Invoices unpaid after thirty (30) days accrue interest at 1% per month.
+
+4. CONFIDENTIALITY
+Each party shall protect the other party's Confidential Information with at least
+reasonable care.
+Section 4.2 shall survive termination of this Agreement for five (5) years.
+
+5. LIMITATION OF LIABILITY
+Neither party's total liability shall exceed the fees paid in the twelve (12) months
+before the claim arose.
+
+8. TERMINATION
+Either party may terminate this Agreement for convenience on sixty (60) days' written
+notice. Either party may terminate immediately if the other party materially breaches
+this Agreement and fails to cure the breach within fifteen (15) days of notice.
+
+9. GOVERNING LAW
+This Agreement is governed by the laws of the State of Delaware.
+
+IN WITNESS WHEREOF
+The parties have executed this Agreement as of the date first written above.

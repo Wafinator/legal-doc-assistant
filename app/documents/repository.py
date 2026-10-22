@@ -43,3 +43,38 @@ def list_documents(db: Session, limit: int, offset: int) -> tuple[list[Row], int
     ).all()
     total = db.scalar(select(func.count()).select_from(Document)) or 0
     return list(rows), total
+
+
+# ts_headline options: up to 2 fragments of about 10-30 words around the matches,
+# with matched words wrapped in ** so the model can see why a document matched.
+_HEADLINE_OPTIONS = "MaxFragments=2, MinWords=10, MaxWords=30, StartSel=**, StopSel=**"
+
+
+def search_documents(
+    db: Session, query: str, document_id: int | None = None, limit: int = 5
+) -> list[Row]:
+    """Full-text search ranked by relevance.
+
+    websearch_to_tsquery parses the query like a search engine does: plain words
+    are ANDed, "quoted phrases" must appear together, `or` is OR, and -word
+    excludes. It never raises on odd user input, unlike to_tsquery. Words are
+    stemmed, so "terminating" also matches "terminate" and "termination".
+    """
+    tsquery = func.websearch_to_tsquery("english", query)
+    rank = func.ts_rank(Document.search_vector, tsquery)
+    stmt = (
+        select(
+            Document.id.label("document_id"),
+            Document.title,
+            func.ts_headline("english", Document.content, tsquery, _HEADLINE_OPTIONS).label(
+                "snippet"
+            ),
+            rank.label("rank"),
+        )
+        .where(Document.search_vector.op("@@")(tsquery))
+        .order_by(rank.desc(), Document.id)
+        .limit(limit)
+    )
+    if document_id is not None:
+        stmt = stmt.where(Document.id == document_id)
+    return list(db.execute(stmt).all())

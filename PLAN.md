@@ -67,12 +67,13 @@ Each phase ends the same way: run the suite, commit, then **stop** with an expla
 - Structured log per call: model, attempt, latency_ms, input/output tokens, stop_reason.
 - **Tests you'll write:** `is_retryable` across the error classes (build errors with `make_status_error(429)` etc. from `tests/fakes.py`; the SDK uses `httpx2`, not `httpx`); backoff timing with an injected fake `sleep`; giving up after max attempts; no retry on a 400; and no retry once a delta has been emitted.
 
-### [ ] Phase 3: agent loop and tools
-- Tools (`strict: true` schemas, `additionalProperties: false`):
+### [x] Phase 3: agent loop and tools
+- Tools (schemas with `additionalProperties: false`; every input validated with Pydantic in code). *(Built: `strict: true` left off. It can't be checked against Haiku without an API key, and the Pydantic validation covers bad input either way.)*
   - `search_documents(query, document_id?)` returns the top 5 hits as `{document_id, title, snippet, rank}`.
   - `get_section(document_id, heading)` matches headings case-insensitively, exact match first, then contains. If nothing matches it returns `is_error` plus the list of available headings so the model can try again.
 - `run_agent(question, document_id, llm, db, max_steps)` yields events. Each step: call the LLM; if `stop_reason == "tool_use"`, run every `tool_use` block, then send back **all** `tool_result`s in one user message; if `end_turn`, finish. Hitting `max_steps` produces a clear "step limit reached" outcome. Bad tool input or a tool exception becomes an `is_error` tool_result instead of crashing the request. A `max_tokens` or `refusal` stop reason is handled explicitly.
 - A system prompt keeps answers grounded in tool results and asks for section citations.
+- *(Built: sections have levels, so a parent heading like `III. ARGUMENT` includes its subsections. Sample documents live in `tests/data/` and load with the `load_sample` fixture.)*
 - **Tests you'll write:** unit tests for `split_sections` on contracts and court-filing-style headings; integration tests for `search_documents` (stemming, filtering by document_id, no hits); the loop with a scripted fake (single answer, search then section then answer, max-step cutoff, unknown tool name, a tool error fed back to the model, tokens summed across steps).
 
 ### [ ] Phase 4: SSE streaming

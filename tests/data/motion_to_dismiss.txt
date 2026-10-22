@@ -1,0 +1,28 @@
+UNITED STATES DISTRICT COURT
+DISTRICT OF DELAWARE
+
+Harbor Freight Logistics Inc., Plaintiff,
+v.
+Northwind Analytics LLC, Defendant.
+
+Case No. 1:26-cv-00417
+
+DEFENDANT'S MEMORANDUM IN SUPPORT OF MOTION TO DISMISS
+
+I. INTRODUCTION
+Plaintiff's complaint alleges breach of contract but fails to identify any provision of
+the Master Services Agreement that Defendant breached.
+
+II. STATEMENT OF FACTS
+The parties entered into the Agreement on March 1, 2026. Plaintiff sent a notice of
+breach on June 2, 2026 and filed suit four days later.
+
+III. ARGUMENT
+A. Standard of Review
+To survive a motion to dismiss, a complaint must state a claim that is plausible on its face.
+B. Plaintiff Did Not Allow the Cure Period
+1. The Agreement requires fifteen days to cure a material breach before termination.
+Plaintiff filed suit four days after its notice, so the cure period had not run.
+
+IV. CONCLUSION
+For these reasons, the Court should dismiss the complaint.
