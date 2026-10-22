@@ -14,7 +14,7 @@ from datetime import datetime
 import pytest
 
 LIST_KEY = "items"
-MISSING_ID = str(uuid.uuid4())  # swap for 999_999 if your ids are integers
+MISSING_ID = 999_999
 
 
 def make_doc(client, title="Sample Contract", content="This agreement is made between A and B."):
