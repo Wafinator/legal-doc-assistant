@@ -8,11 +8,11 @@ def test_search_documents_stems_keyword_variants(db, make_document):
         title="Termination Agreement",
         content=(
             "This agreement sets out the parties' rights. "
-            "The terminating clause explains the termination procedure."
+            "The termination clause explains the termination procedure."
         ),
     )
 
-    result = execute_tool("search_documents", {"query": "terminating"}, db)
+    result = execute_tool("search_documents", {"query": "terminated"}, db)
 
     payload = json.loads(result.content)
     assert payload["results"]
