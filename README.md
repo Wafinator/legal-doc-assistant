@@ -54,7 +54,8 @@ Interactive API docs: http://localhost:8000/docs
 
 1. Create a key in the [Claude Console](https://console.anthropic.com) (Settings → API Keys).
 2. In `.env`, set `LLM_MODE=anthropic` and `ANTHROPIC_API_KEY=sk-ant-...`. `.env` is git-ignored.
-3. Restart the server.
+3. Restart the server. Without a usable key, `/ask` returns `503` with a message saying what to
+   set, instead of starting a stream.
 
 With Haiku 5.5 at `effort=low`, one question (2–3 model calls) costs roughly a tenth of a cent.
 
@@ -63,7 +64,46 @@ With Haiku 5.5 at `effort=low`, one question (2–3 model calls) costs roughly a
 ## Example
 
 `scripts/ask.py` is a small SSE client. It prints tool activity to stderr and the answer as it
-streams. This run is in **demo mode**:
+streams.
+
+### Real model (Claude Haiku 5.5)
+
+```text
+$ uv run python scripts/ask.py "How can the agreement be terminated?" --document-id 1
+[tool] search_documents({"query": "termination", "document_id": 1})
+[tool] search_documents({"query": "terminate notice", "document_id": 1})
+[tool] get_section({"document_id": 1, "heading": "8. TERMINATION"})
+The Master Services Agreement (Northwind / Harbor Freight) can be terminated in two ways, both set
+out in Section 8 (TERMINATION):
+
+1. **For convenience:** Either party may terminate the Agreement for convenience on sixty (60)
+   days' written notice.
+2. **For material breach:** Either party may terminate immediately if the other party materially
+   breaches the Agreement and fails to cure the breach within fifteen (15) days of notice.
+
+The Agreement also has a fixed initial term of two years from the Effective Date, "unless
+terminated earlier under Section 8" (per the opening section of the Agreement). Section 4.2 is
+noted as surviving termination for five years, which is relevant to what obligations continue
+afterward.
+
+[done] answered in 3 steps, 3620 ms, 3972 input / 459 output tokens
+```
+
+Two things this run shows:
+
+- **Parallel tool calls:** the model ran both searches in one step, then fetched the section,
+  then answered, so 3 tool calls took 3 steps. The loop runs every tool call in a step and sends
+  all the results back in one message.
+- **A citation slip:** the two-year-term quote comes from section `2. TERM`, which the model only
+  saw inside a search snippet and never opened, so it's credited to "the opening section". The
+  answer is right and the source label is wrong. This is the kind of error an eval set would
+  catch (see [next steps](#limitations-and-next-steps)).
+
+The run cost about $0.0006.
+
+### Demo mode
+
+The same question with `LLM_MODE=demo`, no API key:
 
 ```text
 $ uv run python scripts/ask.py "How can the agreement be terminated?" --document-id 1
@@ -122,8 +162,8 @@ data: {"stop_reason": "answered", "steps": 3, "usage": {"input_tokens": 0, "outp
 text), `done` (`stop_reason`, `steps`, summed token `usage`, `latency_ms`), and `error`
 (`llm_unavailable`, `internal_error` or `timeout`).
 
-Validation errors (`422`) and an unknown `document_id` (`404`) are returned **before** the stream
-opens. Once streaming has started the status is already `200`, so later failures arrive as an
+Validation errors (`422`), an unknown `document_id` (`404`) and a missing API key in
+`LLM_MODE=anthropic` (`503`) are returned **before** the stream opens. Once streaming has started the status is already `200`, so later failures arrive as an
 `error` event. Every response carries an `X-Request-ID` header; send your own (letters, digits,
 `.`, `_`, `-`) to trace a request through the logs.
 
@@ -260,6 +300,7 @@ service container on every push and pull request.
   formats may split oddly. A short ALL-CAPS line (like `LLC` in a signature block) counts as a
   heading.
 - **Answer quality isn't measured:** the next step is an eval set of questions with expected
-  sections, scored automatically, so prompt or model changes can be compared.
+  sections and citations, scored automatically, so prompt or model changes can be compared. The
+  citation slip in the example above is a real case it should catch.
 - **Async:** switching to async SQLAlchemy and `AsyncAnthropic` would serve more concurrent
   streams per process.

@@ -134,6 +134,13 @@ def _elapsed_ms(started: float) -> int:
     return round((time.perf_counter() - started) * 1000)
 
 
+PLACEHOLDER_API_KEY = "your-anthropic-api-key"  # the value in .env.example
+
+
+class LLMNotConfiguredError(Exception):
+    """LLM_MODE=anthropic but no usable API key. main.py turns this into a 503."""
+
+
 @lru_cache
 def get_llm_client() -> LLMClient:
     """FastAPI dependency. Built once on first use (not at import), so the app
@@ -145,9 +152,16 @@ def get_llm_client() -> LLMClient:
 
         log.info("llm_mode", extra={"mode": "demo"})
         return DemoLLMClient()
-    api_key = settings.anthropic_api_key.get_secret_value() if settings.anthropic_api_key else None
+    api_key = settings.anthropic_api_key.get_secret_value() if settings.anthropic_api_key else ""
+    if not api_key.strip() or api_key == PLACEHOLDER_API_KEY:
+        # Fail here, before any streaming starts, so the client gets a clear 503
+        # instead of a vague error event halfway through a response.
+        raise LLMNotConfiguredError(
+            "No Anthropic API key configured. Set ANTHROPIC_API_KEY in .env, "
+            "or set LLM_MODE=demo to run without one."
+        )
     sdk = anthropic.Anthropic(
-        api_key=api_key,  # None lets the SDK fall back to its usual credential lookup
+        api_key=api_key,
         max_retries=0,  # we retry ourselves, so every attempt is logged and tested
         timeout=anthropic.Timeout(settings.llm_read_timeout, connect=settings.llm_connect_timeout),
     )
