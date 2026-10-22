@@ -171,21 +171,6 @@ Validation errors (`422`), an unknown `document_id` (`404`) and a missing API ke
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    C[Client] -- "POST /ask" --> MW[Request logging<br/>middleware]
-    MW --> R[FastAPI router<br/>validate, 404 check]
-    R -- "SSE stream" --> C
-    R --> A[Agent loop<br/>run_agent]
-    A <--> L{{LLMClient<br/>protocol}}
-    L -.-> AN[AnthropicLLMClient<br/>retries, timeouts]
-    L -.-> D[DemoLLMClient]
-    L -.-> F[FakeLLMClient<br/>tests only]
-    AN --> API[(Claude API)]
-    A --> T[Tools<br/>search_documents<br/>get_section]
-    T --> DB[(PostgreSQL<br/>full-text index)]
-```
-
 **How a question flows through `/ask`:**
 
 1. **Validation:** the router checks the request body and that the document exists, then returns
