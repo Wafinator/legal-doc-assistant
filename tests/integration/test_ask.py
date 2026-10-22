@@ -1,20 +1,12 @@
 """Integration tests for the streamed /ask endpoint."""
 
-import json
 import re
 
 import pytest
 
 from app.llm.client import TextDelta
 from tests.fakes import FakeLLMClient, make_status_error, text_turn, tool_turn
-
-
-def parse_events(response):
-    return [
-        (event_line.removeprefix("event: "), json.loads(data_line.removeprefix("data: ")))
-        for frame in response.text.strip().split("\n\n")
-        for event_line, data_line in [frame.splitlines()]
-    ]
+from tests.sse import parse_sse
 
 
 def test_ask_streams_tool_answer_and_summed_usage(client_with_llm, make_document):
@@ -41,7 +33,7 @@ def test_ask_streams_tool_answer_and_summed_usage(client_with_llm, make_document
     response = client.post("/ask", json={"question": "How long is the term?"})
 
     assert response.status_code == 200
-    events = parse_events(response)
+    events = parse_sse(response.text)
     assert [name for name, _ in events] == [
         "tool_call",
         "tool_result",
@@ -73,10 +65,12 @@ def test_ask_unknown_document_returns_404_before_streaming(client_with_llm):
         pytest.param({"question": "Valid question", "unknown": True}, id="extra_field"),
     ],
 )
-def test_ask_invalid_input_returns_422(client, payload):
-    response = client.post("/ask", json=payload)
+def test_ask_invalid_input_returns_422(client_with_llm, payload):
+    fake = FakeLLMClient([])
+    response = client_with_llm(fake).post("/ask", json=payload)
 
     assert response.status_code == 422
+    assert fake.calls == []
 
 
 def test_ask_streams_error_when_llm_fails_mid_stream(client_with_llm):
@@ -86,7 +80,7 @@ def test_ask_streams_error_when_llm_fails_mid_stream(client_with_llm):
     response = client.post("/ask", json={"question": "What does this say?"})
 
     assert response.status_code == 200
-    events = parse_events(response)
+    events = parse_sse(response.text)
     assert [name for name, _ in events] == ["token", "error"]
     assert events[-1][1]["code"] == "llm_unavailable"
 
