@@ -16,6 +16,7 @@ def make_doc(client, title="Sample Contract", content="This agreement is made be
 
 # Upload
 
+
 def test_upload_returns_201_with_document(client):
     title = "Lease Agreement"
     content = "The tenant agrees to pay rent on the first of each month."
@@ -33,7 +34,9 @@ def test_upload_returns_201_with_document(client):
 
 
 def test_upload_is_stored_and_readable(client):
-    created = make_doc(client, title="NDA", content="Confidential information shall not be disclosed.")
+    created = make_doc(
+        client, title="NDA", content="Confidential information shall not be disclosed."
+    )
 
     response = client.get(f"/documents/{created['id']}")
 
@@ -43,6 +46,7 @@ def test_upload_is_stored_and_readable(client):
 
 # Validation
 
+
 @pytest.mark.parametrize(
     "payload",
     [
@@ -51,7 +55,9 @@ def test_upload_is_stored_and_readable(client):
         pytest.param({"title": "a" * 201, "content": "some text"}, id="title_too_long"),
         pytest.param({"title": "Valid", "content": ""}, id="empty_content"),
         pytest.param({"title": "Valid", "content": "a" * 500_001}, id="content_too_long"),
-        pytest.param({"title": "Valid", "content": "some text", "author": "me"}, id="unknown_field"),
+        pytest.param(
+            {"title": "Valid", "content": "some text", "author": "me"}, id="unknown_field"
+        ),
     ],
 )
 def test_upload_invalid_payload_returns_422(client, payload):
@@ -61,6 +67,7 @@ def test_upload_invalid_payload_returns_422(client, payload):
 
 
 # List
+
 
 def test_list_leaves_out_content(client):
     make_doc(client, title="First")
@@ -104,6 +111,7 @@ def test_list_invalid_limit_returns_422(client, limit):
 
 # Get
 
+
 def test_get_unknown_id_returns_404(client):
     response = client.get(f"/documents/{MISSING_ID}")
 
@@ -113,6 +121,7 @@ def test_get_unknown_id_returns_404(client):
 # Isolation
 # Each test creates exactly one document. If the reset fixture stopped
 # truncating between tests, whichever runs second would see total == 2.
+
 
 def test_isolation_first(client):
     make_doc(client, title="Isolation A")
