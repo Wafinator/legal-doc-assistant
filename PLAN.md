@@ -45,19 +45,19 @@ legal-doc-assistant/
 ```
 
 ## Phases
-### [ ] Phase 0: create the repo (before any code)
+### [x] Phase 0: create the repo (before any code)
 - Create `Wafinator/legal-doc-assistant` (public, empty) on GitHub, add it as `origin` of the local repo to `/home/user/legal-doc-assistant`, attach it to this session, and work on `main`.
 - Copy this plan into the repo as `PLAN.md` and make it the first commit, so it stays with the project. At the end of each phase I'll tick that phase off in `PLAN.md`.
 - Phase commits are pushed to GitHub as we go, so CI runs for real in phase 5. If the repo can't be created from this session, I'll tell you the exact step that failed and how to fix it.
 
 Each phase ends the same way: run the suite, commit, then **stop** with an explanation of what was built, the list of tests for you to write, and room for questions.
 
-### [ ] Phase 1: setup, Docker Compose, model, document endpoints
+### [x] Phase 1: setup, Docker Compose, model, document endpoints
 - `uv init`, dependencies: fastapi, uvicorn, sqlalchemy, psycopg[binary], pydantic-settings, anthropic. Dev dependencies: pytest, httpx, ruff.
 - `docker-compose.yml`: `postgres:16` with a healthcheck, plus an init script that creates the dev and test databases.
 - `Document`: id, title, content, created_at, plus a generated `search_vector` with a GIN index.
 - Endpoints: `POST /documents` (201), `GET /documents` (id, title, created_at, char_count, with `limit`/`offset` paging, no content), `GET /documents/{id}` (404 if missing), `GET /health`.
-- Test scaffolding: `conftest.py` with a session-scoped engine pointed at `legal_docs_test`, an autouse `TRUNCATE documents RESTART IDENTITY CASCADE` before each test, a `client` fixture that overrides `get_db`, and a `make_document` factory.
+- Test scaffolding: `conftest.py` with a session-scoped engine pointed at `legal_docs_test`, an autouse `TRUNCATE documents RESTART IDENTITY CASCADE` before each test, a `client` fixture, and a `make_document` factory. *(Built: conftest sets `DATABASE_URL` to the test DB before importing the app, so no `get_db` override is needed. `dependency_overrides` is used for the LLM client in phase 2.)*
 - **Tests you'll write:** upload returns 201 and the body round-trips; validation 422s (empty or whitespace title, oversized content, missing fields); the list endpoint excludes content and pages correctly; fetching an unknown id returns 404; a test that proves the reset fixture isolates tests.
 
 ### [ ] Phase 2: LLM client wrapper
