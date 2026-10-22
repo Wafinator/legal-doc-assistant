@@ -1,0 +1,66 @@
+name: CI
+
+# Run on every push to any branch, and on pull requests.
+on:
+  push:
+  pull_request:
+
+# The workflow only needs to read the code. Granting the minimum is good hygiene:
+# a compromised step can't push commits or edit issues.
+permissions:
+  contents: read
+
+# If you push again while a run for the same branch is still going, cancel the
+# old run. Only the newest commit's result matters.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    # A real Postgres for the integration tests, the same major version as
+    # docker-compose.yml. GitHub starts it before the steps and waits until the
+    # health check passes.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: legal
+          POSTGRES_PASSWORD: legal
+          POSTGRES_DB: legal_docs_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U legal -d legal_docs_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
+
+    env:
+      # tests/conftest.py reads this. In CI, Postgres is on the standard port.
+      TEST_DATABASE_URL: postgresql+psycopg://legal:legal@localhost:5432/legal_docs_test
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true  # reuse downloaded packages between runs
+
+      # --frozen: install exactly what uv.lock says, and fail if pyproject.toml
+      # and the lockfile disagree, instead of quietly resolving new versions.
+      # uv also installs the Python version from .python-version (3.12).
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Check formatting
+        run: uv run ruff format --check .
+
+      - name: Run tests
+        run: uv run pytest

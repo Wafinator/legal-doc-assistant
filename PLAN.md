@@ -83,7 +83,7 @@ Each phase ends the same way: run the suite, commit, then **stop** with an expla
 - *(Built: the stream opens its own DB session because it outlives the endpoint function. The middleware is plain ASGI so `latency_ms` covers the whole stream. Tests get `client_with_llm(fake)` in conftest and `parse_sse` in `tests/sse.py`.)*
 - **Tests you'll write:** parse the SSE frames from TestClient and assert the event order; the 404 happens before streaming; 422 on a bad question; a fake that raises mid-stream produces an `error` event; a log-capture test (`caplog`) for the tool-call and usage log lines.
 
-### [ ] Phase 5: GitHub Actions CI
+### [x] Phase 5: GitHub Actions CI
 - `ci.yml` runs on every push and PR: a `postgres:16` service container, `astral-sh/setup-uv`, `uv sync --frozen`, `ruff check`, `pytest`. No API key needed.
 - Push, then confirm the workflow run passes on GitHub.
 
