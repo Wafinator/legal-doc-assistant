@@ -1,11 +1,9 @@
-"""Integration tests for the document endpoints, get and list endpoints."""
+"""Integration tests for the document upload, list and get endpoints."""
 
-import uuid
 from datetime import datetime
 
 import pytest
 
-LIST_KEY = "items"
 MISSING_ID = 999_999
 
 
@@ -71,7 +69,7 @@ def test_list_leaves_out_content(client):
     response = client.get("/documents")
 
     assert response.status_code == 200
-    items = response.json()[LIST_KEY]
+    items = response.json()["items"]
     assert len(items) == 2
     for item in items:
         assert "content" not in item
@@ -88,8 +86,8 @@ def test_list_is_newest_first_and_pages(client):
     assert page_one.status_code == 200
     assert page_two.status_code == 200
 
-    page_one_ids = [item["id"] for item in page_one.json()[LIST_KEY]]
-    page_two_ids = [item["id"] for item in page_two.json()[LIST_KEY]]
+    page_one_ids = [item["id"] for item in page_one.json()["items"]]
+    page_two_ids = [item["id"] for item in page_two.json()["items"]]
 
     assert page_one_ids == [third["id"], second["id"]]
     assert page_two_ids == [first["id"]]
