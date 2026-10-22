@@ -60,12 +60,12 @@ Each phase ends the same way: run the suite, commit, then **stop** with an expla
 - Test scaffolding: `conftest.py` with a session-scoped engine pointed at `legal_docs_test`, an autouse `TRUNCATE documents RESTART IDENTITY CASCADE` before each test, a `client` fixture, and a `make_document` factory. *(Built: conftest sets `DATABASE_URL` to the test DB before importing the app, so no `get_db` override is needed. `dependency_overrides` is used for the LLM client in phase 2.)*
 - **Tests you'll write:** upload returns 201 and the body round-trips; validation 422s (empty or whitespace title, oversized content, missing fields); the list endpoint excludes content and pages correctly; fetching an unknown id returns 404; a test that proves the reset fixture isolates tests.
 
-### [ ] Phase 2: LLM client wrapper
+### [x] Phase 2: LLM client wrapper
 - `LLMClient.stream_turn(system, messages, tools) -> Iterator[TextDelta | LLMResponse]`. `LLMResponse` holds `content` (raw block dicts, which keep `thinking` blocks intact so they can be passed back unchanged), `stop_reason`, and `usage`.
 - `AnthropicLLMClient` wraps `client.messages.stream(...)` with an `httpx.Timeout` (connect / read) and `max_retries=0`.
 - `retry.py`: `call_with_retries(fn, policy, sleep=time.sleep)` with exponential backoff, full jitter and a max-attempts cap. It honors the `retry-after` header and has an `is_retryable(exc)` classifier. **It retries only before the first token is streamed out**, because a retry after that would show the user duplicated text.
 - Structured log per call: model, attempt, latency_ms, input/output tokens, stop_reason.
-- **Tests you'll write:** `is_retryable` across the error classes (you'll build a `RateLimitError` from an `httpx.Response`); backoff timing with an injected fake `sleep`; giving up after max attempts; no retry on a 400; and no retry once a delta has been emitted.
+- **Tests you'll write:** `is_retryable` across the error classes (build errors with `make_status_error(429)` etc. from `tests/fakes.py`; the SDK uses `httpx2`, not `httpx`); backoff timing with an injected fake `sleep`; giving up after max attempts; no retry on a 400; and no retry once a delta has been emitted.
 
 ### [ ] Phase 3: agent loop and tools
 - Tools (`strict: true` schemas, `additionalProperties: false`):
