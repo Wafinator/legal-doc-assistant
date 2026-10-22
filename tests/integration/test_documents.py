@@ -1,12 +1,4 @@
-"""Integration tests for the document endpoints.
-
-Assumes these fixtures exist in tests/conftest.py
-  client   -    a FastAPI TestClient wired to the test database
-  reset the db an autouse fixture that truncates tables before each test
-
-Assumes the list endpoint returns {"items": [...], "total": int}.
-Adjust LIST_KEY or the field names below if your schema differs.
-"""
+"""Integration tests for the document endpoints, get and list endpoints."""
 
 import uuid
 from datetime import datetime
