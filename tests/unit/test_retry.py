@@ -125,6 +125,7 @@ def test_stream_gives_up_after_max_attempts():
         )
 
     assert calls["count"] == MAX_ATTEMPTS
+    assert len(delays) == MAX_ATTEMPTS - 1
 
 
 def test_stream_does_not_retry_client_error():
@@ -162,6 +163,7 @@ def test_stream_does_not_retry_after_events_were_sent():
     assert exc_info.value.status_code == 529
     assert calls["count"] == 1
     assert received == ["event_1"]
+    assert delays == []
 
 
 def fake_open_stream(outcomes):
