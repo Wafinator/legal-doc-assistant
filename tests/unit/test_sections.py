@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import pytest
 
 from app.documents.sections import is_heading, split_sections
@@ -36,13 +34,13 @@ def test_is_heading_false_for_sentence_like_or_invalid_lines(line):
     assert is_heading(line) is False
 
 
-def test_split_sections_on_agreement():
-    text = (Path(__file__).parent / "data" / "services_agreement.txt").read_text()
-
+def test_split_sections_on_agreement(load_sample):
+    text = load_sample("services_agreement")
     sections = split_sections(text)
     headings = [section.heading for section in sections]
 
     assert headings == [
+        "MASTER SERVICES AGREEMENT",
         "1. DEFINITIONS",
         "2. TERM",
         "3. Fees and Payment",
@@ -54,15 +52,23 @@ def test_split_sections_on_agreement():
         "9. GOVERNING LAW",
         "IN WITNESS WHEREOF",
     ]
-    assert [section.level for section in sections if section.heading in {"3.1 Fees", "3.2 Late Payment"}] == [2, 2]
+    assert [
+        section.level for section in sections if section.heading in {"3.1 Fees", "3.2 Late Payment"}
+    ] == [2, 2]
 
-    confidentiality = next(section for section in sections if section.heading == "4. CONFIDENTIALITY")
-    assert "Section 4.2 shall survive termination of this Agreement for five (5) years." in confidentiality.text
+    confidentiality = next(
+        section for section in sections if section.heading == "4. CONFIDENTIALITY"
+    )
+    assert (
+        "Section 4.2 shall survive termination of this Agreement for five (5) years."
+        in confidentiality.text
+    )
 
 
-def test_split_sections_nests_motion_subsections_without_including_next_top_level_section():
-    text = (Path(__file__).parent / "data" / "motion_to_dismiss.txt").read_text()
-
+def test_split_sections_nests_motion_subsections_without_including_next_top_level_section(
+    load_sample,
+):
+    text = load_sample("motion_to_dismiss")
     sections = split_sections(text)
     argument = next(section for section in sections if section.heading == "III. ARGUMENT")
 

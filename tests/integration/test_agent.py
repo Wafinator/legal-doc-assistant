@@ -1,6 +1,4 @@
-import json
-
-from app.agent.events import Done, ToolCall, ToolResultEvent, Token
+from app.agent.events import Done, Token, ToolCall, ToolResultEvent
 from app.agent.loop import run_agent
 from tests.fakes import FakeLLMClient, text_turn, tool_turn
 
@@ -10,7 +8,8 @@ def test_agent_search_then_section_then_answer(db, make_document):
         title="Master Services Agreement",
         content=(
             "8. TERMINATION\n"
-            "Either party may terminate this Agreement for convenience on sixty (60) days' written notice."
+            "Either party may terminate this Agreement for convenience on sixty (60) "
+            "days' written notice."
         ),
     )
 
@@ -26,12 +25,13 @@ def test_agent_search_then_section_then_answer(db, make_document):
                 {"document_id": doc.id, "heading": "8. TERMINATION"},
                 tool_use_id="toolu_2",
             ),
-            text_turn("The agreement allows either party to terminate with 60 days' notice.")
-            ,
+            text_turn("The agreement allows either party to terminate with 60 days' notice."),
         ]
     )
 
-    events = list(run_agent("What does the agreement say about termination?", fake, db, max_steps=6))
+    events = list(
+        run_agent("What does the agreement say about termination?", fake, db, max_steps=6)
+    )
 
     assert [type(event) for event in events] == [
         ToolCall,
@@ -69,7 +69,9 @@ def test_agent_search_then_section_then_answer(db, make_document):
 
     assert events[-1].stop_reason == "answered"
     assert events[-1].steps == 3
-    assert "termination" in events[-2].text.lower()
+    assert events[-2] == Token(
+        "The agreement allows either party to terminate with 60 days' notice."
+    )
 
 
 def test_agent_stops_after_max_steps(db, make_document):

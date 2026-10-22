@@ -5,10 +5,10 @@ from app.agent.tools import execute_tool
 
 def test_search_documents_stems_keyword_variants(db, make_document):
     doc = make_document(
-        title="Termination Agreement",
+        title="Services Agreement",
         content=(
             "This agreement sets out the parties' rights. "
-            "The termination clause explains the termination procedure."
+            "The termination clause explains the procedure."
         ),
     )
 
@@ -21,7 +21,7 @@ def test_search_documents_stems_keyword_variants(db, make_document):
 
 def test_search_documents_filters_by_document_id(db, make_document):
     first = make_document(title="First", content="Termination notice must be sent before suit.")
-    second = make_document(title="Second", content="Termination notice must be sent before suit.")
+    make_document(title="Second", content="Termination notice must be sent before suit.")
 
     result = execute_tool(
         "search_documents",
@@ -42,7 +42,9 @@ def test_search_documents_returns_empty_list_when_no_hits(db):
 
 
 def test_search_documents_snippet_wraps_matches_in_markers(db, make_document):
-    make_document(title="Services Agreement", content="The agreement requires notice before termination.")
+    make_document(
+        title="Services Agreement", content="The agreement requires notice before termination."
+    )
 
     result = execute_tool("search_documents", {"query": "agreement"}, db)
 
