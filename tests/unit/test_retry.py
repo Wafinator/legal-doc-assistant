@@ -4,7 +4,9 @@ import anthropic
 import httpx
 import pytest
 
-from app.llm.retry import (  
+from app.llm.retry import (
+    POLICY,
+    RetryPolicy,
     compute_delay,
     is_retryable,
     retry_after_seconds,
@@ -13,6 +15,7 @@ from app.llm.retry import (
 
 MAX_DELAY = 8.0
 MAX_ATTEMPTS = 3
+POLICY = RetryPolicy(max_attempts=MAX_ATTEMPTS, base_delay=0.5, max_delay=MAX_DELAY)
 
 REQUEST = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
 
@@ -62,6 +65,7 @@ def fails_mid_stream(event, error):
 
 # is_retryable
 
+
 @pytest.mark.parametrize(
     "error",
     [
@@ -90,26 +94,27 @@ def test_is_retryable_false_for_unrelated_exception():
 
 # compute_delay
 
+
 @pytest.mark.parametrize("attempt, expected", [(1, 0.5), (2, 1.0), (3, 2.0)])
 def test_compute_delay_doubles_each_attempt(attempt, expected):
-    assert compute_delay(attempt, max_delay=MAX_DELAY, rand=lambda: 1.0) == expected
+    assert compute_delay(attempt, policy=POLICY, rand=lambda: 1.0) == expected
 
 
 def test_compute_delay_is_capped_at_max_delay():
-    assert compute_delay(20, max_delay=MAX_DELAY, rand=lambda: 1.0) == MAX_DELAY
+    assert compute_delay(20, policy=POLICY, rand=lambda: 1.0) == MAX_DELAY
 
 
 def test_compute_delay_zero_jitter_gives_zero():
-    assert compute_delay(3, max_delay=MAX_DELAY, rand=lambda: 0.0) == 0
+    assert compute_delay(3, policy=POLICY, rand=lambda: 0.0) == 0
 
 
 def test_compute_delay_retry_after_overrides_smaller_delay():
     # attempt 1 would normally wait 0.5s, the server asked for 3
-    assert compute_delay(1, max_delay=MAX_DELAY, retry_after=3, rand=lambda: 1.0) == 3
+    assert compute_delay(1, policy=POLICY, retry_after=3, rand=lambda: 1.0) == 3
 
 
 def test_compute_delay_retry_after_is_capped_at_max_delay():
-    assert compute_delay(1, max_delay=MAX_DELAY, retry_after=60, rand=lambda: 1.0) == MAX_DELAY
+    assert compute_delay(1, policy=POLICY, retry_after=60, rand=lambda: 1.0) == MAX_DELAY
 
 
 # retry_after_seconds
@@ -136,9 +141,8 @@ def test_stream_recovers_after_two_overloaded_errors():
     result = list(
         stream_with_retries(
             open_stream,
-            max_attempts=MAX_ATTEMPTS,
+            policy=POLICY,
             sleep=delays.append,
-            rand=lambda: 1.0,
         )
     )
 
@@ -155,9 +159,8 @@ def test_stream_gives_up_after_max_attempts():
         list(
             stream_with_retries(
                 open_stream,
-                max_attempts=MAX_ATTEMPTS,
+                policy=POLICY,
                 sleep=delays.append,
-                rand=lambda: 1.0,
             )
         )
 
@@ -172,9 +175,8 @@ def test_stream_does_not_retry_client_error():
         list(
             stream_with_retries(
                 open_stream,
-                max_attempts=MAX_ATTEMPTS,
+                policy=POLICY,
                 sleep=delays.append,
-                rand=lambda: 1.0,
             )
         )
 
@@ -192,9 +194,8 @@ def test_stream_does_not_retry_after_events_were_sent():
     with pytest.raises(anthropic.APIStatusError) as exc_info:
         for event in stream_with_retries(
             open_stream,
-            max_attempts=MAX_ATTEMPTS,
+            policy=POLICY,
             sleep=delays.append,
-            rand=lambda: 1.0,
         ):
             received.append(event)
 
