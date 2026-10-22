@@ -76,10 +76,11 @@ Each phase ends the same way: run the suite, commit, then **stop** with an expla
 - *(Built: sections have levels, so a parent heading like `III. ARGUMENT` includes its subsections. Sample documents live in `tests/data/` and load with the `load_sample` fixture.)*
 - **Tests you'll write:** unit tests for `split_sections` on contracts and court-filing-style headings; integration tests for `search_documents` (stemming, filtering by document_id, no hits); the loop with a scripted fake (single answer, search then section then answer, max-step cutoff, unknown tool name, a tool error fed back to the model, tokens summed across steps).
 
-### [ ] Phase 4: SSE streaming
+### [x] Phase 4: SSE streaming
 - `POST /ask` with `{question (1–2000 chars), document_id?}` → `text/event-stream`. Event types: `tool_call`, `tool_result` (summary), `token` (text delta), `done` (`{steps, usage, latency_ms}`), `error`.
 - A total agent deadline (for example 60s) on top of the per-call timeouts. Errors after the stream starts go out as an `error` event, because the HTTP status has already been sent as 200. A missing document returns 404 *before* the stream opens.
 - Request-log middleware: method, path, status, latency_ms, request_id (also returned in the `X-Request-ID` header).
+- *(Built: the stream opens its own DB session because it outlives the endpoint function. The middleware is plain ASGI so `latency_ms` covers the whole stream. Tests get `client_with_llm(fake)` in conftest and `parse_sse` in `tests/sse.py`.)*
 - **Tests you'll write:** parse the SSE frames from TestClient and assert the event order; the 404 happens before streaming; 422 on a bad question; a fake that raises mid-stream produces an `error` event; a log-capture test (`caplog`) for the tool-call and usage log lines.
 
 ### [ ] Phase 5: GitHub Actions CI

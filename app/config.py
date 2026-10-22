@@ -37,6 +37,8 @@ class Settings(BaseSettings):
 
     # Model calls per question. Each tool round trip uses one.
     agent_max_steps: int = 6
+    # Wall-clock limit for one whole /ask request, across all steps.
+    agent_timeout_s: float = 60.0
 
 
 @lru_cache

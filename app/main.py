@@ -5,10 +5,11 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app.api import documents
+from app.api import ask, documents
 from app.config import get_settings
 from app.db import Base, engine
 from app.logging_setup import configure_logging
+from app.middleware import RequestLoggingMiddleware
 
 
 @asynccontextmanager
@@ -24,7 +25,9 @@ def create_app() -> FastAPI:
     tests create a fresh app and override its dependencies."""
     configure_logging(get_settings().log_level)
     app = FastAPI(title="Legal Doc Assistant", version="0.1.0", lifespan=lifespan)
+    app.add_middleware(RequestLoggingMiddleware)
     app.include_router(documents.router)
+    app.include_router(ask.router)
 
     @app.get("/health", tags=["health"])
     def health() -> dict[str, str]:

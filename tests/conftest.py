@@ -24,6 +24,7 @@ from sqlalchemy import text  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 
 from app.db import Base, SessionLocal, engine  # noqa: E402
+from app.llm.client import LLMClient, get_llm_client  # noqa: E402
 from app.main import create_app  # noqa: E402
 from app.models import Document  # noqa: E402
 
@@ -103,3 +104,25 @@ def load_sample() -> Callable[[str], str]:
         return (DATA_DIR / f"{name}.txt").read_text(encoding="utf-8")
 
     return _load
+
+
+@pytest.fixture
+def client_with_llm() -> Iterator[Callable[[LLMClient], TestClient]]:
+    """Factory: a TestClient whose app uses the given LLM client (usually a FakeLLMClient).
+
+    This is FastAPI's dependency_overrides: wherever an endpoint declares
+    Depends(get_llm_client), the app calls our lambda instead.
+    """
+    clients: list[TestClient] = []
+
+    def _make(llm: LLMClient) -> TestClient:
+        app = create_app()
+        app.dependency_overrides[get_llm_client] = lambda: llm
+        client = TestClient(app)
+        client.__enter__()  # same as `with TestClient(app)`: runs startup
+        clients.append(client)
+        return client
+
+    yield _make
+    for client in clients:
+        client.__exit__(None, None, None)

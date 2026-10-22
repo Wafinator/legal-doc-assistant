@@ -44,10 +44,17 @@ class JsonFormatter(logging.Formatter):
 
 
 def configure_logging(level: str = "INFO") -> None:
+    """Install the JSON handler on the root logger. Safe to call more than once.
+
+    Only our own handler is swapped out; any others are left alone. pytest's
+    `caplog` fixture works by adding a handler to the root logger, and wiping
+    the list would silently break log assertions in tests.
+    """
     handler = logging.StreamHandler()
     handler.setFormatter(JsonFormatter())
     root = logging.getLogger()
-    root.handlers = [handler]
+    root.handlers = [h for h in root.handlers if not isinstance(h.formatter, JsonFormatter)]
+    root.addHandler(handler)
     root.setLevel(level)
     # The SDK's HTTP library logs every request at INFO; our llm_call line already covers it.
     logging.getLogger("httpx2").setLevel(logging.WARNING)
