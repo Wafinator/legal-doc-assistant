@@ -6,6 +6,7 @@ on startup, so a typo like LLM_MAX_ATTEMPTS=abc fails fast instead of at request
 """
 
 from functools import lru_cache
+from typing import Literal
 
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -16,6 +17,10 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+psycopg://legal:legal@localhost:5433/legal_docs"
     log_level: str = "INFO"
+
+    # "anthropic" calls Claude (needs a key, uses tokens). "demo" uses a scripted
+    # stand-in, so the app runs with no key and no cost. See app/llm/demo.py.
+    llm_mode: Literal["anthropic", "demo"] = "anthropic"
 
     # SecretStr hides the value in repr() and logs: printing settings shows '**********'.
     anthropic_api_key: SecretStr | None = None

@@ -140,6 +140,11 @@ def get_llm_client() -> LLMClient:
     and the test suite start fine without an API key. Tests replace it with
     `app.dependency_overrides[get_llm_client] = lambda: FakeLLMClient(...)`."""
     settings = get_settings()
+    if settings.llm_mode == "demo":
+        from app.llm.demo import DemoLLMClient  # imported here: demo.py imports this module
+
+        log.info("llm_mode", extra={"mode": "demo"})
+        return DemoLLMClient()
     api_key = settings.anthropic_api_key.get_secret_value() if settings.anthropic_api_key else None
     sdk = anthropic.Anthropic(
         api_key=api_key,  # None lets the SDK fall back to its usual credential lookup

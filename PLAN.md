@@ -87,8 +87,9 @@ Each phase ends the same way: run the suite, commit, then **stop** with an expla
 - `ci.yml` runs on every push and PR: a `postgres:16` service container, `astral-sh/setup-uv`, `uv sync --frozen`, `ruff check`, `pytest`. No API key needed.
 - Push, then confirm the workflow run passes on GitHub.
 
-### [ ] Phase 6: README
+### [x] Phase 6: README
 Covers what the project is and why, an architecture diagram (Mermaid: request → router → agent loop ↔ LLMClient / tools → Postgres), the design decisions above, setup (`docker compose up -d`, `uv sync`, `.env`, `uv run uvicorn`), example `curl` requests including `curl -N` for SSE, how testing works, and "what I'd do next" (Alembic, async, auth, eval set).
+- *(Built: also added demo mode, `LLM_MODE=demo`, a scripted stand-in for the model so the app runs with no API key or cost, and `scripts/upload_samples.py` / `scripts/ask.py`, cross-platform helpers that avoid curl quoting issues on Windows.)*
 
 ## Verification (every phase)
 - `docker compose up -d` and then `uv run pytest` must be green. That includes the scaffolding smoke test I add, and your tests once you've written them.
