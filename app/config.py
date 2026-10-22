@@ -13,7 +13,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    database_url: str = "postgresql+psycopg://legal:legal@localhost:5432/legal_docs"
+    database_url: str = "postgresql+psycopg://legal:legal@localhost:5433/legal_docs"
     log_level: str = "INFO"
 
 

@@ -11,7 +11,7 @@ import os
 # engine at import time from DATABASE_URL. CI sets TEST_DATABASE_URL; locally
 # the default matches docker-compose.yml.
 TEST_DATABASE_URL = os.environ.get(
-    "TEST_DATABASE_URL", "postgresql+psycopg://legal:legal@localhost:5432/legal_docs_test"
+    "TEST_DATABASE_URL", "postgresql+psycopg://legal:legal@localhost:5433/legal_docs_test"
 )
 os.environ["DATABASE_URL"] = TEST_DATABASE_URL
 
