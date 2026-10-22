@@ -207,22 +207,6 @@ scripts/             upload_samples.py, ask.py
 
 ---
 
-## Design decisions
-
-| Decision | Why |
-|---|---|
-| **Hand-written agent loop** rather than the SDK's tool runner | The loop is the core of the project. Owning it makes it easy to log every tool call, enforce a step limit, and test it step by step with a scripted fake. |
-| **`LLMClient` protocol + dependency injection** | Tests and demo mode swap the model without touching the agent or the endpoint. The test suite never needs a key or network access. |
-| **Own retries, SDK retries off** | Every retry is logged and unit-tested. Retries use exponential backoff with full jitter, honor `retry-after`, and cover 429, 5xx/529 and connection errors only, never 4xx. |
-| **No retry after the first streamed token** | A retry would replay the answer from the start and the user would see duplicated text, so a mid-stream failure becomes an `error` event instead. |
-| **Errors before the stream, events after** | HTTP status can only be set once. Validation and the 404 check run before the first byte; later failures become `error` events with a generic message (details only in logs). |
-| **Postgres full-text search** (generated `tsvector` column + GIN index) | Real keyword search with stemming ("terminated" matches "termination"), ranking and highlighted snippets, without a separate search service or vector database. |
-| **Heading parser with levels** | Legal documents nest (`3` → `3.1`, `III.` → `A.`), so asking for `III. ARGUMENT` returns its subsections, not an empty body. Sentence-like lines such as `Section 4.2 shall survive…` are not treated as headings. |
-| **Tool errors go back to the model** | Unknown tools, invalid input, or a missing heading return an error result listing the available headings, so the model can correct itself instead of the request failing. |
-| **Thinking blocks passed back unchanged** | Haiku 5.5 thinks by default. Each assistant turn is resent exactly as received, which the API requires for tool use with thinking. |
-| **ASGI middleware instead of `@app.middleware`** | It wraps `send`, so the logged latency covers the whole stream, not just the time to the first byte. |
-| **Sync SQLAlchemy** | FastAPI runs sync endpoints in a thread pool. At this scale it's simpler and makes test fixtures much easier than async. |
-
 **Reliability settings** (all configurable via env vars):
 
 | Setting | Default | What it limits |
